@@ -1,2 +1,2 @@
-# goassert-
+# goassert
 A Go validation library
