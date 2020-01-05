@@ -45,8 +45,41 @@ func Test_assertMax(t *testing.T) {
 			args: args{
 				name:       "Width",
 				val:        reflect.ValueOf(struct{ Width int64 }{Width: 4}).Field(0),
-				assertion:  map[string]string{"max": "4"},
-				violations: &[]Violation{{Field: "Width", Constraint: "max"}},
+				assertion:  map[string]string{"max": "3"},
+				violations: &[]Violation{},
+				path:       "",
+			},
+			expected: &[]Violation{{Field: "Width", Constraint: "max"}},
+		},
+		{
+			name: "scenario4",
+			args: args{
+				name:       "Width",
+				val:        reflect.ValueOf(struct{ Width float64 }{Width: 3.0}).Field(0),
+				assertion:  map[string]string{"max": "3"},
+				violations: &[]Violation{},
+				path:       "",
+			},
+			expected: &[]Violation{},
+		},
+		{
+			name: "scenario5",
+			args: args{
+				name:       "Width",
+				val:        reflect.ValueOf(struct{ Width float64 }{Width: 2.0}).Field(0),
+				assertion:  map[string]string{"max": "3"},
+				violations: &[]Violation{},
+				path:       "",
+			},
+			expected: &[]Violation{},
+		},
+		{
+			name: "scenario6",
+			args: args{
+				name:       "Width",
+				val:        reflect.ValueOf(struct{ Width float64 }{Width: 4.0}).Field(0),
+				assertion:  map[string]string{"max": "3"},
+				violations: &[]Violation{},
 				path:       "",
 			},
 			expected: &[]Violation{{Field: "Width", Constraint: "max"}},
@@ -157,6 +190,38 @@ func Test_assertMin(t *testing.T) {
 			args: args{
 				name:       "Width",
 				val:        reflect.ValueOf(struct{ Width float64 }{Width: 1}).Field(0),
+				assertion:  map[string]string{"min": "2"},
+				violations: &[]Violation{},
+				path:       "",
+			},
+			expected: &[]Violation{{Field: "Width", Constraint: "min"}},
+		}, {
+			name: "scenario4",
+			args: args{
+				name:       "Width",
+				val:        reflect.ValueOf(struct{ Width int64 }{Width: 1}).Field(0),
+				assertion:  map[string]string{"min": "1"},
+				violations: &[]Violation{},
+				path:       "",
+			},
+			expected: &[]Violation{},
+		},
+		{
+			name: "scenario5",
+			args: args{
+				name:       "Width",
+				val:        reflect.ValueOf(struct{ Width int64 }{Width: 1}).Field(0),
+				assertion:  map[string]string{"min": "0"},
+				violations: &[]Violation{},
+				path:       "",
+			},
+			expected: &[]Violation{},
+		},
+		{
+			name: "scenario6",
+			args: args{
+				name:       "Width",
+				val:        reflect.ValueOf(struct{ Width int64 }{Width: 1}).Field(0),
 				assertion:  map[string]string{"min": "2"},
 				violations: &[]Violation{},
 				path:       "",

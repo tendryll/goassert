@@ -186,7 +186,7 @@ func assertMax(assertions map[string]string, val reflect.Value, name string, vio
 
 			fieldValue := val.Float()
 
-			if !IsNilOrEmpty(val) && fieldValue < max {
+			if !IsNilOrEmpty(val) && fieldValue > max {
 				violation := Violation{Field: asQualifiedPath(path, name), Constraint: "max"}
 				*violations = append(*violations, violation)
 			}
