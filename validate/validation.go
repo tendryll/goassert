@@ -28,7 +28,7 @@ var assertFns = map[string]func(assertions map[string]string, v reflect.Value, n
 // This exported function is interface for validating a struct. It returns a slice of @Violation structs for each
 // violation encountered.
 func Validate(ifc interface{}) []Violation {
-	var violations = make([]Violation, 0)
+	violations := make([]Violation, 0)
 	assertAll(ifc, &violations, "")
 	return violations
 }
@@ -71,7 +71,7 @@ func validate(v reflect.Value, fieldIndex int, violations *[]Violation, path str
 	name := v.Type().Field(fieldIndex).Name
 
 	// get a map of assertions to validate
-	assertions := asChecks(tag)
+	assertions := asAssertions(tag)
 
 	for assertion, _ := range assertions {
 		if fnValidation, ok := assertFns[assertion]; ok {
@@ -83,7 +83,7 @@ func validate(v reflect.Value, fieldIndex int, violations *[]Violation, path str
 }
 
 // Returns a slice of validations to check.
-func asChecks(tag reflect.StructTag) map[string]string {
+func asAssertions(tag reflect.StructTag) map[string]string {
 	checks := make(map[string]string)
 
 	if t, ok := tag.Lookup("assert"); ok {
@@ -91,7 +91,7 @@ func asChecks(tag reflect.StructTag) map[string]string {
 		tagPairs := strings.Split(assertTags[0], ",")
 
 		for _, pair := range tagPairs {
-			key, value, err := asKeyValue(pair, "=")
+			key, value, err := asKeyValue(pair)
 
 			if err != nil {
 				fmt.Println(err)
@@ -301,19 +301,8 @@ func asPath(path string, t reflect.Type) string {
 	return path
 }
 
-func asKeyValue(pair, sep string) (string, string, error) {
-	if pair == "" {
-		return "", "", errors.New("pair is an empty string")
-	}
-
-	if sep == "" {
-		return "", "", errors.New("sep is an empty string")
-	}
-
-	if !strings.Contains(pair, sep) {
-		return "", "", errors.New(fmt.Sprintf("%s doesn't contain the '%s' separator", pair, sep))
-	}
-
+// Takes string pair string and sep string used to execute a split on and returns key, value and error values.
+func asKeyValue(pair string) (string, string, error) {
 	keyValue := strings.Split(pair, "=")
 
 	if len(keyValue) != 2 {

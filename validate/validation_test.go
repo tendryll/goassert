@@ -1,11 +1,12 @@
 package validate
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
 
-func Test_assertMax(t *testing.T) {
+func TestAssertMax(t *testing.T) {
 	type args struct {
 		assertion  map[string]string
 		val        reflect.Value
@@ -94,7 +95,7 @@ func Test_assertMax(t *testing.T) {
 	}
 }
 
-func Test_assertMaxLength(t *testing.T) {
+func TestAssertMaxLength(t *testing.T) {
 	type args struct {
 		assertion  map[string]string
 		val        reflect.Value
@@ -150,7 +151,7 @@ func Test_assertMaxLength(t *testing.T) {
 	}
 }
 
-func Test_assertMin(t *testing.T) {
+func TestAssertMin(t *testing.T) {
 	type args struct {
 		assertion  map[string]string
 		val        reflect.Value
@@ -238,7 +239,7 @@ func Test_assertMin(t *testing.T) {
 	}
 }
 
-func Test_assertMinLength(t *testing.T) {
+func TestAssertMinLength(t *testing.T) {
 	type args struct {
 		assertion  map[string]string
 		val        reflect.Value
@@ -294,7 +295,7 @@ func Test_assertMinLength(t *testing.T) {
 	}
 }
 
-func Test_assertPattern(t *testing.T) {
+func TestAssertPattern(t *testing.T) {
 	type args struct {
 		assertion  map[string]string
 		val        reflect.Value
@@ -339,7 +340,7 @@ func Test_assertPattern(t *testing.T) {
 	}
 }
 
-func Test_assertRequired(t *testing.T) {
+func TestAssertRequired(t *testing.T) {
 	type args struct {
 		assertion  map[string]string
 		val        reflect.Value
@@ -395,7 +396,7 @@ func Test_assertRequired(t *testing.T) {
 	}
 }
 
-func Test_asChecks(t *testing.T) {
+func TestAsAssertions(t *testing.T) {
 	type args struct {
 		tag reflect.StructTag
 	}
@@ -424,9 +425,208 @@ func Test_asChecks(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if result := asChecks(tt.args.tag); !reflect.DeepEqual(result, tt.expected) {
-				t.Errorf("asChecks() = %+v, expected %+v", result, tt.expected)
+			if result := asAssertions(tt.args.tag); !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("asAssertions() = %+v, expected %+v", result, tt.expected)
 			}
 		})
 	}
+}
+
+func TestAsKeyValue(t *testing.T) {
+	tests := []struct {
+		name          string
+		args          string
+		expectedKey   string
+		expectedValue string
+		err           error
+	}{
+		{
+			name:          "scenario1",
+			args:          "required=true",
+			expectedKey:   "required",
+			expectedValue: "true",
+			err:           nil,
+		},
+		{
+			name:          "scenario2",
+			args:          "required=true,blah",
+			expectedKey:   "required",
+			expectedValue: "true",
+			err:           nil,
+		},
+		{
+			name:          "scenario3",
+			args:          "",
+			expectedKey:   "",
+			expectedValue: "",
+			err:           errors.New("pair doesn't contain both a key and value"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if actualKey, actualValue, err := asKeyValue(tt.args); actualKey != tt.expectedKey && actualValue != tt.
+				expectedValue && err != tt.err {
+				t.Errorf("asKeyValue() = %s, %s, %+v, expected %s, %s, %+v", actualKey, actualValue, err,
+					tt.expectedKey, tt.expectedValue, tt.err)
+			}
+		})
+	}
+}
+
+func TestAsPath(t *testing.T) {
+	type args struct {
+		path string
+		t    reflect.Type
+	}
+
+	tests := []struct {
+		name     string
+		args     args
+		expected string
+	}{
+		{
+			name: "scenario1",
+			args: args{
+				path: "",
+				t:    reflect.TypeOf(Person{}),
+			},
+			expected: "Person",
+		},
+		{
+			name: "scenario1",
+			args: args{
+				path: "Person",
+				t:    reflect.TypeOf(Address{}),
+			},
+			expected: "Person.Address",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if actual := asPath(tt.args.path, tt.args.t); actual != tt.expected {
+				t.Errorf("asPath() = %s, expected = %s", actual, tt.expected)
+			}
+		})
+	}
+}
+
+func TestAssertAll(t *testing.T) {
+	type args struct {
+		person Person
+		path   string
+	}
+
+	tests := []struct {
+		name     string
+		args     args
+		expected *[]Violation
+	}{
+		{
+			name: "scenario1",
+			args: args{
+				person: Person{
+					FirstName:  "James",
+					MiddleInit: "T",
+					LastName:   "Kirk",
+					Address: []*Address{
+						{
+							Address1: "755 Crossover Lane",
+							City:     "Memphis",
+							State:    "TN",
+							Country:  "USA",
+							ZipCode:  "38107",
+							Location: Location{
+								Latitude: Latitude{
+									Degrees:   35.1098212,
+									Direction: "N",
+								},
+								Longitude: -89.9077976,
+							},
+						},
+					},
+				},
+				path: "",
+			},
+			expected: &[]Violation{},
+		},
+		{
+			name: "scenario1",
+			args: args{
+				person: Person{
+					FirstName: "James",
+					Address: []*Address{
+						{
+							Address1: "755 Crossover Lane",
+							City:     "Memphis",
+							State:    "TN",
+							ZipCode:  "38107",
+							Location: Location{
+								Latitude: Latitude{
+									Degrees:   135.1098212,
+									Direction: "N",
+								},
+								Longitude: -89.9077976,
+							},
+						},
+					},
+				},
+				path: "",
+			},
+			expected: &[]Violation{
+				{
+					Field:      "Person.LastName",
+					Constraint: "required",
+				},
+				{
+					Field:      "Person.Address.Country",
+					Constraint: "required",
+				},
+				{
+					Field:      "Person.Address.Location.Latitude.Degrees",
+					Constraint: "max",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			violations := make([]Violation, 0)
+			assertAll(tt.args.person, &violations, tt.args.path)
+
+			if !reflect.DeepEqual(&violations, tt.expected) {
+				t.Errorf("assertAll() violations = %+v, expected %+v", violations, tt.expected)
+			}
+		})
+	}
+}
+
+type Latitude struct {
+	Degrees   float64 `json:"degrees" assert:"required=true,min=0.0,max=90.0"`
+	Direction string  `json:"direction" assert:"required=true,pattern=^(N|S)$"`
+}
+
+type Location struct {
+	Latitude  Latitude `json:"latitude" assert:"required=true"`
+	Longitude float64  `json:"longitude" assert:"required=true,min=-180.0,max=180.0"`
+}
+
+type Address struct {
+	Address1 string   `json:"address1" assert:"required=true"`
+	Address2 string   `json:"address2"`
+	Address3 string   `json:"address3"`
+	City     string   `json:"city"`
+	State    string   `json:"state" assert:"required=true"`
+	Country  string   `json:"country" assert:"required=true,maxlength=3"`
+	ZipCode  string   `json:"zipcode" assert:"required=true"`
+	Location Location `json:"location"`
+}
+
+type Person struct {
+	FirstName  string     `json:"firstName" assert:"required=true"`
+	MiddleInit string     `json:"middleInitial" assert:"minlength=1,maxlength=1"`
+	LastName   string     `json:"lastName" assert:"required=true"`
+	Address    []*Address `json:"address" assert:"required=true"`
 }
