@@ -40,7 +40,7 @@ type Latitude struct {
 ```
 
 The Go Assert library is used by passing the desired struct to the `validate.Validate` function. 
-Returned is a slice of type []Violation. Each violation specifies the constraint used the field that
+Returned is a slice of type []Violation. Each violation specifies the constraint used and the field that
   failed the validation check. 
  
 As an example,
