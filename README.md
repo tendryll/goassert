@@ -34,8 +34,8 @@ Let's assume that we have a struct named `Latitude` with two fields, `Degrees` o
 
 ```go
 type Latitude struct {
-	Degrees   float64 `json:"degrees" assert:"required=true,min=0.0,max=90.0"`
-	Direction string  `json:"direction" assert:"required=true,pattern=^(N|S)$"`
+    Degrees   float64 `json:"degrees" assert:"required=true,min=0.0,max=90.0"`
+    Direction string  `json:"direction" assert:"required=true,pattern=^(N|S)$"`
 }
 ```
 
