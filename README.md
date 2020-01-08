@@ -39,8 +39,8 @@ type Latitude struct {
 }
 ```
 
-The Go Assert library is used by passing the desired struct to the `validate.Validate` function as a non-pointer
- variable. Returned is a slice of type []Violation. Each violation specifies the constraint used the field that
+The Go Assert library is used by passing the desired struct to the `validate.Validate` function. 
+Returned is a slice of type []Violation. Each violation specifies the constraint used the field that
   failed the validation check. 
  
 As an example,
