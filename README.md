@@ -7,13 +7,13 @@ Go Assert is a library for validating struct fields.
 Add the following import.
 
 ```go
-import "github.com/tendryll/goassert/validate"
+import "github.com/tendryll/goassert/assert"
 ```
 
 If using dep, execute:
 
 ```go
-dep ensure -add github.com/pkg/errors
+dep ensure -add github.com/tendryll/goassert/assert
 ```
 
 ## Usage

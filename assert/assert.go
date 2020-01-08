@@ -1,4 +1,5 @@
-package validate
+// Package assert contains the functionality to validate a struct and its associated tests.
+package assert
 
 import (
 	"errors"
@@ -10,12 +11,14 @@ import (
 	"strings"
 )
 
+// Violation represents the constraint that failed an assertion. Field is the name of the field that failed an
+// assertion and Constraint is the assertion type that was used to validate that field.
 type Violation struct {
 	Field      string
 	Constraint string
 }
 
-// a map with validation functions as values, each associated with the validation name as the key
+// The assertFns map contains the validation functions as values each associated with the validation name as the key.
 var assertFns = map[string]func(assertions map[string]string, v reflect.Value, n string, vs *[]Violation, path string) *[]Violation{
 	"required":  assertRequired,
 	"min":       assertMin,
@@ -25,15 +28,13 @@ var assertFns = map[string]func(assertions map[string]string, v reflect.Value, n
 	"minlength": assertMinLength,
 }
 
-// This exported function is interface for validating a struct. It returns a slice of @Violation structs for each
-// violation encountered.
-func Validate(ifc interface{}) []Violation {
+// Assert is used to validate a struct's field. It returns a slice of Violation elements.
+func Assert(ifc interface{}) []Violation {
 	violations := make([]Violation, 0)
 	assertAll(ifc, &violations, "")
 	return violations
 }
 
-// Validate iterates through each Field in the provided interface.
 func assertAll(ifc interface{}, violations *[]Violation, path string) {
 	v := reflect.ValueOf(ifc)
 	t := reflect.TypeOf(ifc)
@@ -42,7 +43,7 @@ func assertAll(ifc interface{}, violations *[]Violation, path string) {
 	path = asPath(path, t)
 
 	for i := 0; i < t.NumField(); i++ {
-		// validate the struct's fields
+		// assert the struct's fields
 		violations = validate(v, i, violations, path)
 
 		// walk the rest of the object graph
@@ -64,13 +65,12 @@ func assertAll(ifc interface{}, violations *[]Violation, path string) {
 	}
 }
 
-// Executes validation checks for each of the checks required for a Field.
 func validate(v reflect.Value, fieldIndex int, violations *[]Violation, path string) *[]Violation {
 	tag := v.Type().Field(fieldIndex).Tag
 	val := v.Field(fieldIndex)
 	name := v.Type().Field(fieldIndex).Name
 
-	// get a map of assertions to validate
+	// get a map of assertions to assert
 	assertions := asAssertions(tag)
 
 	for assertion, _ := range assertions {
@@ -82,7 +82,6 @@ func validate(v reflect.Value, fieldIndex int, violations *[]Violation, path str
 	return violations
 }
 
-// Returns a slice of validations to check.
 func asAssertions(tag reflect.StructTag) map[string]string {
 	checks := make(map[string]string)
 
@@ -104,10 +103,10 @@ func asAssertions(tag reflect.StructTag) map[string]string {
 	return checks
 }
 
-// Checks that the Field value exists.
+// assertRequired checks that the value exists and is not empty.
 func assertRequired(assertions map[string]string, val reflect.Value, name string, violations *[]Violation, path string) *[]Violation {
 	if required, ok := assertions["required"]; ok {
-		if required == "true" && IsNilOrEmpty(val) {
+		if required == "true" && isNilOrEmpty(val) {
 			violation := Violation{Field: asQualifiedPath(path, name), Constraint: "required"}
 			*violations = append(*violations, violation)
 		}
@@ -116,7 +115,7 @@ func assertRequired(assertions map[string]string, val reflect.Value, name string
 	return violations
 }
 
-// Checks that the value is not less than the minimum value.
+// assertMin checks that the value is not less than the minimum value.
 func assertMin(assertions map[string]string, val reflect.Value, name string, violations *[]Violation, path string) *[]Violation {
 	if _, ok := assertions["min"]; ok {
 		switch val.Type().Kind() {
@@ -131,7 +130,7 @@ func assertMin(assertions map[string]string, val reflect.Value, name string, vio
 
 			fieldValue := val.Int()
 
-			if !IsNilOrEmpty(val) && fieldValue < min {
+			if !isNilOrEmpty(val) && fieldValue < min {
 				violation := Violation{Field: asQualifiedPath(path, name), Constraint: "min"}
 				*violations = append(*violations, violation)
 			}
@@ -145,7 +144,7 @@ func assertMin(assertions map[string]string, val reflect.Value, name string, vio
 
 			fieldValue := val.Float()
 
-			if !IsNilOrEmpty(val) && fieldValue < min {
+			if !isNilOrEmpty(val) && fieldValue < min {
 				violation := Violation{Field: asQualifiedPath(path, name), Constraint: "min"}
 				*violations = append(*violations, violation)
 			}
@@ -157,7 +156,7 @@ func assertMin(assertions map[string]string, val reflect.Value, name string, vio
 	return violations
 }
 
-// Checks that the value is not greater than the maximum value.
+// assertMax checks that the value is not greater than the maximum value.
 func assertMax(assertions map[string]string, val reflect.Value, name string, violations *[]Violation, path string) *[]Violation {
 	if _, ok := assertions["max"]; ok {
 		switch val.Type().Kind() {
@@ -172,7 +171,7 @@ func assertMax(assertions map[string]string, val reflect.Value, name string, vio
 
 			fieldValue := val.Int()
 
-			if !IsNilOrEmpty(val) && fieldValue > max {
+			if !isNilOrEmpty(val) && fieldValue > max {
 				violation := Violation{Field: asQualifiedPath(path, name), Constraint: "max"}
 				*violations = append(*violations, violation)
 			}
@@ -186,7 +185,7 @@ func assertMax(assertions map[string]string, val reflect.Value, name string, vio
 
 			fieldValue := val.Float()
 
-			if !IsNilOrEmpty(val) && fieldValue > max {
+			if !isNilOrEmpty(val) && fieldValue > max {
 				violation := Violation{Field: asQualifiedPath(path, name), Constraint: "max"}
 				*violations = append(*violations, violation)
 			}
@@ -198,6 +197,7 @@ func assertMax(assertions map[string]string, val reflect.Value, name string, vio
 	return violations
 }
 
+// Checks that the field value, a string, matches the regular expression specified.
 func assertPattern(assertions map[string]string, val reflect.Value, name string, violations *[]Violation, path string) *[]Violation {
 	if pattern, ok := assertions["pattern"]; ok {
 		if matched, _ := regexp.MatchString(pattern, val.Interface().(string)); !matched {
@@ -209,6 +209,7 @@ func assertPattern(assertions map[string]string, val reflect.Value, name string,
 	return violations
 }
 
+// Checks that the length of the field of type string is no longer than the value specified.
 func assertMaxLength(assertions map[string]string, val reflect.Value, name string, violations *[]Violation, path string) *[]Violation {
 	if m, ok := assertions["maxlength"]; ok {
 		maxLength, err := strconv.Atoi(m)
@@ -217,7 +218,7 @@ func assertMaxLength(assertions map[string]string, val reflect.Value, name strin
 			log.Printf("%s:%+v", "unable to parse maxlength tag value", err)
 		}
 
-		if !IsNilOrEmpty(val) && len(val.Interface().(string)) > maxLength {
+		if !isNilOrEmpty(val) && len(val.Interface().(string)) > maxLength {
 			violation := Violation{Field: asQualifiedPath(path, name), Constraint: "maxlength"}
 			*violations = append(*violations, violation)
 		}
@@ -226,6 +227,7 @@ func assertMaxLength(assertions map[string]string, val reflect.Value, name strin
 	return violations
 }
 
+// Checks that the length of the field of type string is no shorter than the value specified.
 func assertMinLength(assertions map[string]string, val reflect.Value, name string, violations *[]Violation, path string) *[]Violation {
 	if m, ok := assertions["minlength"]; ok {
 		minLength, err := strconv.Atoi(m)
@@ -234,7 +236,7 @@ func assertMinLength(assertions map[string]string, val reflect.Value, name strin
 			log.Printf("%s:%+v", "unable to parse minlength tag value", err)
 		}
 
-		if !IsNilOrEmpty(val) && len(val.Interface().(string)) < minLength {
+		if !isNilOrEmpty(val) && len(val.Interface().(string)) < minLength {
 			violation := Violation{Field: asQualifiedPath(path, name), Constraint: "minlength"}
 			*violations = append(*violations, violation)
 		}
@@ -254,7 +256,7 @@ func asQualifiedPath(path string, name string) string {
 }
 
 // Returns true if the value is nil or empty.
-func IsNilOrEmpty(v reflect.Value) bool {
+func isNilOrEmpty(v reflect.Value) bool {
 	switch v.Type().Kind() {
 	case reflect.Bool:
 		return !v.Bool()
@@ -279,7 +281,7 @@ func IsNilOrEmpty(v reflect.Value) bool {
 	case reflect.Struct:
 		if &v != nil {
 			for i := 0; i < v.NumField(); i++ {
-				if !IsNilOrEmpty(v.Field(i)) {
+				if !isNilOrEmpty(v.Field(i)) {
 					return false
 				}
 			}
