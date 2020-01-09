@@ -57,7 +57,11 @@ func assertAll(ifc interface{}, violations *[]Violation, path string) {
 			slice := v.Field(i)
 
 			for idx := 0; idx < slice.Len(); idx++ {
-				assertAll(slice.Index(idx).Elem().Interface(), violations, path)
+				if slice.Index(idx).Type().Kind() != reflect.Ptr {
+					assertAll(slice.Index(idx).Interface(), violations, path)
+				} else {
+					assertAll(slice.Index(idx).Elem().Interface(), violations, path)
+				}
 			}
 		default:
 			// todo
