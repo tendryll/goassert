@@ -523,34 +523,34 @@ func TestAssertAll(t *testing.T) {
 		args     args
 		expected *[]Violation
 	}{
-		//{
-		//    name: "scenario1",
-		//    args: args{
-		//        person: Person{
-		//            FirstName:  "James",
-		//            MiddleInit: "T",
-		//            LastName:   "Kirk",
-		//            Address: []*Address{
-		//                {
-		//                    Address1: "755 Crossover Lane",
-		//                    City:     "Memphis",
-		//                    State:    "TN",
-		//                    Country:  "USA",
-		//                    ZipCode:  "38107",
-		//                    Location: &Location{
-		//                        Latitude: Latitude{
-		//                            Degrees:   35.1098212,
-		//                            Direction: "N",
-		//                        },
-		//                        Longitude: -89.9077976,
-		//                    },
-		//                },
-		//            },
-		//        },
-		//        path: "",
-		//    },
-		//    expected: &[]Violation{},
-		//},
+		{
+			name: "scenario1",
+			args: args{
+				person: Person{
+					FirstName:  "James",
+					MiddleInit: "T",
+					LastName:   "Kirk",
+					Address: []*Address{
+						{
+							Address1: "755 Crossover Lane",
+							City:     "Memphis",
+							State:    "TN",
+							Country:  "USA",
+							ZipCode:  "38107",
+							Location: &Location{
+								Latitude: &Latitude{
+									Degrees:   35.1098212,
+									Direction: "N",
+								},
+								Longitude: -89.9077976,
+							},
+						},
+					},
+				},
+				path: "",
+			},
+			expected: &[]Violation{},
+		},
 		{
 			name: "scenario2",
 			args: args{

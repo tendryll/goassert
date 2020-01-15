@@ -57,16 +57,16 @@ func assertAll(ifc interface{}, violations *[]Violation, path string) {
 			slice := v.Field(i)
 
 			for idx := 0; idx < slice.Len(); idx++ {
-				if slice.Index(idx).Type().Kind() != reflect.Ptr {
-					assertAll(slice.Index(idx).Interface(), violations, path)
-				} else {
+				if !isNilOrEmpty(slice.Index(idx)) {
 					assertAll(slice.Index(idx).Elem().Interface(), violations, path)
 				}
 			}
 		case reflect.Ptr:
-			fieldValue := v.Field(i).Elem().Interface()
+			if !isNilOrEmpty(v.Field(i)) {
+				fieldValue := v.Field(i).Elem().Interface()
 
-			assertAll(fieldValue, violations, path)
+				assertAll(fieldValue, violations, path)
+			}
 		default:
 			// todo
 		}
